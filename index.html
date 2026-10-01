@@ -1,93 +1,361 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>今日のトピックジャンプ</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Today Jump Button - Demo
+    </title>
+
+
+    <style>
+
+        body {
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px 20px;
+
+            line-height: 1.8;
+            color: #333;
+            background: #f8f9fa;
+        }
+
+
+        h1 {
+            text-align: center;
+        }
+
+
+        .description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+
+        /*
+         * ジャンプボタン
+         */
+        .today-jump-area {
+            text-align: center;
+            margin: 25px 0 40px;
+        }
+
+
+        .today-jump-button {
+
+            background-color: #28a745;
+            color: #ffffff;
+
+            font-size: 18px;
+            font-weight: bold;
+
+            padding: 14px 28px;
+
+            border: none;
+            border-radius: 30px;
+
+            box-shadow:
+                0 4px 6px
+                rgba(0, 0, 0, 0.15);
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s,
+                background-color 0.2s;
+        }
+
+
+        .today-jump-button:hover {
+
+            background-color: #218838;
+
+            transform:
+                translateY(-2px);
+        }
+
+
+        /*
+         * 小さなバージョン表示
+         */
+        .today-jump-version {
+
+            font-size: 10px;
+            color: #999;
+
+            margin-top: 4px;
+        }
+
+
+        /*
+         * トピック
+         */
+        .topic {
+
+            background: #ffffff;
+
+            padding: 20px;
+
+            margin: 50px 0;
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 2px 8px
+                rgba(0, 0, 0, 0.08);
+        }
+
+
+        .topic h2 {
+
+            margin-top: 0;
+
+            padding: 8px;
+
+            border-radius: 6px;
+
+            transition:
+                background-color 0.3s;
+        }
+
+
+        .note {
+
+            background: #e9f5ff;
+
+            border-left:
+                5px solid #0d6efd;
+
+            padding: 15px;
+
+            margin: 25px 0;
+
+            border-radius: 6px;
+        }
+
+    </style>
+
 </head>
+
+
 <body>
 
-<!-- 今日のトピックへ飛ぶ大きなボタン V2 -->
-<div style="text-align: center; margin: 15px 0;">
-    <button type="button" onclick="jumpToToday()" style="background-color: #28a745; color: #ffffff; font-size: 18px; font-weight: bold; padding: 14px 28px; border: none; border-radius: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.2s, background-color 0.2s;">
-        📅 今日のトピック（日付）へ直接ジャンプ ⬇
-    </button>
-</div>
 
-<!-- 動作確認用のサンプルコンテンツ -->
-<div style="height: 500px;">スクロール用のダミー領域</div>
-<h2>10月1日</h2>
-<p>本日のトピック内容です。</p>
-<div style="height: 1000px;">スクロール用のダミー領域</div>
+    <h1>
+        📅 Today Jump Button
+    </h1>
 
-<script>
-    function jumpToToday() {
-        var now = new Date();
-        var month = now.getMonth() + 1;
-        var day = now.getDate();
 
-        var todayValue = month * 100 + day;
-        var dateStr1 = month + '月' + day + '日';
-        var dateStr2 = month + '/' + day;
-        var dateStr3 = (month < 10 ? '0' + month : month) + '/' + (day < 10 ? '0' + day : day);
+    <p class="description">
+        今日の日付、または直近の過去のトピックへジャンプします。
+    </p>
 
-        var elements = document.querySelectorAll('h2, h3, h4, h5, .sectionname, .contenttitle');
-        var found = false;
-        var latestElement = null;
-        var latestValue = -1;
-        var latestText = '';
 
-        for (var i = 0; i < elements.length; i++) {
-            var text = elements[i].textContent || elements[i].innerText;
+    <!-- =========================
+         ジャンプボタン
+    ========================== -->
 
-            if (text.indexOf(dateStr1) !== -1 || text.indexOf(dateStr2) !== -1 || text.indexOf(dateStr3) !== -1) {
-                scrollToTopic(elements[i]);
-                found = true;
-                break;
-            }
+    <div class="today-jump-area">
 
-            var m = null;
-            var d = null;
-            var jpMatch = text.match(/(\d{1,2})月(\d{1,2})日/);
-            var slashMatch = text.match(/(\d{1,2})\/(\d{1,2})/);
+        <button type="button"
+                class="today-jump-button"
+                onclick="jumpToToday()">
 
-            if (jpMatch) {
-                m = parseInt(jpMatch[1], 10);
-                d = parseInt(jpMatch[2], 10);
-            } else if (slashMatch) {
-                m = parseInt(slashMatch[1], 10);
-                d = parseInt(slashMatch[2], 10);
-            }
+            📅 今日のトピック（日付）へ直接ジャンプ ⬇
 
-            if (m !== null && d !== null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
-                var value = m * 100 + d;
-                if (value <= todayValue && value > latestValue) {
-                    latestValue = value;
-                    latestElement = elements[i];
-                    latestText = m + '月' + d + '日';
-                }
-            }
+        </button>
+
+
+        <div class="today-jump-version">
+            v0.5
+        </div>
+
+    </div>
+
+
+    <div class="note">
+
+        <strong>動作確認用ページ</strong><br>
+
+        今日のトピックが存在しない場合は、
+        未来のトピックよりも
+        <strong>直近の過去のトピック</strong>
+        を優先します。
+
+    </div>
+
+
+    <!--
+        デモ用の日付は
+        JavaScriptで自動生成します。
+    -->
+
+    <div id="demo-topics"></div>
+
+
+    <!-- =========================
+         デモ用の日付生成
+    ========================== -->
+
+    <script>
+
+        /*
+         * 日付を指定日数ずらす
+         */
+        function addDays(baseDate, days) {
+
+            var date =
+                new Date(baseDate);
+
+            date.setDate(
+                date.getDate() + days
+            );
+
+            return date;
         }
 
-        if (!found) {
-            if (latestElement) {
-                alert('本日（' + dateStr1 + '）のトピックはありません。\n\n最新のトピック（' + latestText + '）へ移動します。');
-                scrollToTopic(latestElement);
-            } else {
-                alert('本日（' + dateStr1 + '）のトピックはありません。\n移動できる過去のトピックも見つかりませんでした。');
-            }
-        }
-    }
 
-    function scrollToTopic(element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        var originalBg = element.style.backgroundColor;
-        element.style.backgroundColor = '#fff3cd';
-        setTimeout(function() {
-            element.style.backgroundColor = originalBg;
-        }, 2000);
-    }
-</script>
+        /*
+         * 「10月1日」形式
+         */
+        function formatDate(date) {
+
+            return (
+                (date.getMonth() + 1) +
+                '月' +
+                date.getDate() +
+                '日'
+            );
+        }
+
+
+        var today =
+            new Date();
+
+
+        /*
+         * デモでは意図的に
+         * 今日そのものを作りません。
+         *
+         * -6日
+         * +1日
+         * +9日
+         *
+         * を配置します。
+         *
+         * ボタンを押すと
+         * -6日のトピックへ移動すれば成功です。
+         */
+
+        var demoDates = [
+
+            {
+                date:
+                    addDays(today, -6),
+
+                title:
+                    '直近の過去のトピック'
+            },
+
+            {
+                date:
+                    addDays(today, 1),
+
+                title:
+                    '明日のトピック'
+            },
+
+            {
+                date:
+                    addDays(today, 9),
+
+                title:
+                    '少し先のトピック'
+            }
+
+        ];
+
+
+        var container =
+            document.getElementById(
+                'demo-topics'
+            );
+
+
+        demoDates.forEach(
+            function (item) {
+
+                var section =
+                    document.createElement(
+                        'section'
+                    );
+
+
+                section.className =
+                    'topic';
+
+
+                var heading =
+                    document.createElement(
+                        'h2'
+                    );
+
+
+                heading.textContent =
+                    formatDate(item.date) +
+                    '　' +
+                    item.title;
+
+
+                var paragraph =
+                    document.createElement(
+                        'p'
+                    );
+
+
+                paragraph.textContent =
+                    'これは動作確認用のサンプルトピックです。';
+
+
+                section.appendChild(
+                    heading
+                );
+
+
+                section.appendChild(
+                    paragraph
+                );
+
+
+                container.appendChild(
+                    section
+                );
+
+            }
+        );
+
+    </script>
+
+
+    <!-- =========================
+         Today Jump Button 本体
+    ========================== -->
+
+    <script src="today-jump-button.js"></script>
+
 
 </body>
+
 </html>
