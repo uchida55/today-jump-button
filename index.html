@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今日のトピックジャンプ</title>
+</head>
+<body>
+
+<p dir="ltr" style="text-align: left;">登録キー：ght</p>
+
+<!-- 今日のトピックへ飛ぶ大きなボタン V2 -->
+<div style="text-align: center; margin: 15px 0;">
+    <button type="button" onclick="jumpToToday()" style="background-color: #28a745; color: #ffffff; font-size: 18px; font-weight: bold; padding: 14px 28px; border: none; border-radius: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.2s, background-color 0.2s;">
+        📅 今日のトピック（日付）へ直接ジャンプ ⬇
+    </button>
+</div>
+
+<!-- 動作確認用のサンプルコンテンツ -->
+<div style="height: 500px;">スクロール用のダミー領域</div>
+<h2>10月1日</h2>
+<p>本日のトピック内容です。</p>
+<div style="height: 1000px;">スクロール用のダミー領域</div>
+
+<script>
+    function jumpToToday() {
+        var now = new Date();
+        var month = now.getMonth() + 1;
+        var day = now.getDate();
+
+        var todayValue = month * 100 + day;
+        var dateStr1 = month + '月' + day + '日';
+        var dateStr2 = month + '/' + day;
+        var dateStr3 = (month < 10 ? '0' + month : month) + '/' + (day < 10 ? '0' + day : day);
+
+        var elements = document.querySelectorAll('h2, h3, h4, h5, .sectionname, .contenttitle');
+        var found = false;
+        var latestElement = null;
+        var latestValue = -1;
+        var latestText = '';
+
+        for (var i = 0; i < elements.length; i++) {
+            var text = elements[i].textContent || elements[i].innerText;
+
+            if (text.indexOf(dateStr1) !== -1 || text.indexOf(dateStr2) !== -1 || text.indexOf(dateStr3) !== -1) {
+                scrollToTopic(elements[i]);
+                found = true;
+                break;
+            }
+
+            var m = null;
+            var d = null;
+            var jpMatch = text.match(/(\d{1,2})月(\d{1,2})日/);
+            var slashMatch = text.match(/(\d{1,2})\/(\d{1,2})/);
+
+            if (jpMatch) {
+                m = parseInt(jpMatch[1], 10);
+                d = parseInt(jpMatch[2], 10);
+            } else if (slashMatch) {
+                m = parseInt(slashMatch[1], 10);
+                d = parseInt(slashMatch[2], 10);
+            }
+
+            if (m !== null && d !== null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                var value = m * 100 + d;
+                if (value <= todayValue && value > latestValue) {
+                    latestValue = value;
+                    latestElement = elements[i];
+                    latestText = m + '月' + d + '日';
+                }
+            }
+        }
+
+        if (!found) {
+            if (latestElement) {
+                alert('本日（' + dateStr1 + '）のトピックはありません。\n\n最新のトピック（' + latestText + '）へ移動します。');
+                scrollToTopic(latestElement);
+            } else {
+                alert('本日（' + dateStr1 + '）のトピックはありません。\n移動できる過去のトピックも見つかりませんでした。');
+            }
+        }
+    }
+
+    function scrollToTopic(element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        var originalBg = element.style.backgroundColor;
+        element.style.backgroundColor = '#fff3cd';
+        setTimeout(function() {
+            element.style.backgroundColor = originalBg;
+        }, 2000);
+    }
+</script>
+
+</body>
+</html>
