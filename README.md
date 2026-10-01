@@ -15,7 +15,6 @@ Webページ内の「日付が含まれる見出し（h2〜h5など）」を自�
 ご自身のHTMLファイルの任意の場所（ボタンを表示させたい場所）に以下のコードを貼り付けてください。
 
 ```html
-<p dir="ltr" style="text-align: left;">登録キー：ght</p>
 
 <!-- 今日のトピックへ飛ぶ大きなボタン -->
 <div style="text-align: center; margin: 15px 0;">
