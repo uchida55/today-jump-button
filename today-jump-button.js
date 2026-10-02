@@ -1,329 +1,212 @@
+<!-- 今日のトピックへ飛ぶ大きなボタン -->
+<div style="text-align:center; margin:15px 0;">
 
-## 2. `today-jump-button.js`
+    <button type="button" onclick="jumpToToday()" style="
+                background-color:#28a745;
+                color:#ffffff;
+                font-size:18px;
+                font-weight:bold;
+                padding:14px 28px;
+                border:none;
+                border-radius:30px;
+                box-shadow:0 4px 6px rgba(0,0,0,0.15);
+                cursor:pointer;
+            ">
+        📅 今日のトピック（日付）へ直接ジャンプ ⬇
+    </button>
 
-これが本体です。
+    <div style="
+        font-size:10px;
+        color:#999;
+        margin-top:3px;
+    ">
+        v0.5
+    </div>
 
-```javascript
-/*
- * Today Jump Button
- * Version: v0.5
- *
- * 優先順位
- * 1. 今日
- * 2. 直近の過去
- * 3. 過去がなければ最も近い未来
- */
+</div>
 
-(function () {
+<script>
+    function jumpToToday() {
 
-    const VERSION = 'v0.5';
+        var now = new Date();
+
+        var today = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+        );
+
+        var todayYear = today.getFullYear();
+        var todayMonth = today.getMonth() + 1;
+        var todayDay = today.getDate();
+
+        var elements = document.querySelectorAll(
+            'h2, h3, h4, h5, .sectionname, .contenttitle'
+        );
+
+        var todayElement = null;
+
+        // 今日以前で最も新しい日
+        var previousElement = null;
+        var previousDate = null;
+        var previousText = '';
+
+        // 過去が存在しない場合に使う未来の日
+        var nextElement = null;
+        var nextDate = null;
+        var nextText = '';
 
 
-    /*
-     * 年のない月日について、
-     * 前年・今年・翌年の中から
-     * 今日に最も近い年を採用する
-     */
-    function resolveYear(month, day, today) {
+        for (var i = 0; i < elements.length; i++) {
 
-        const baseYear = today.getFullYear();
+            var text =
+                elements[i].textContent ||
+                elements[i].innerText ||
+                '';
 
-        const candidates = [
-            new Date(baseYear - 1, month - 1, day),
-            new Date(baseYear,     month - 1, day),
-            new Date(baseYear + 1, month - 1, day)
-        ];
+            var year = null;
+            var month = null;
+            var day = null;
 
-        let bestDate = null;
-        let bestDiff = Infinity;
+            var match;
 
-        for (let i = 0; i < candidates.length; i++) {
 
-            const candidate = candidates[i];
+            // --------------------------------
+            // 2026年10月2日
+            // --------------------------------
+            match = text.match(
+                /(\d{4})年(\d{1,2})月(\d{1,2})日/
+            );
 
-            // 2月31日などの不正日付を除外
-            if (
-                candidate.getMonth() + 1 !== month ||
-                candidate.getDate() !== day
-            ) {
+            if (match) {
+                year = parseInt(match[1], 10);
+                month = parseInt(match[2], 10);
+                day = parseInt(match[3], 10);
+            }
+
+
+            // --------------------------------
+            // 2026/10/2
+            // --------------------------------
+            if (!match) {
+
+                match = text.match(
+                    /(\d{4})\/(\d{1,2})\/(\d{1,2})/
+                );
+
+                if (match) {
+                    year = parseInt(match[1], 10);
+                    month = parseInt(match[2], 10);
+                    day = parseInt(match[3], 10);
+                }
+            }
+
+
+            // --------------------------------
+            // 10月2日
+            // --------------------------------
+            if (!match) {
+
+                match = text.match(
+                    /(\d{1,2})月(\d{1,2})日/
+                );
+
+                if (match) {
+                    month = parseInt(match[1], 10);
+                    day = parseInt(match[2], 10);
+                }
+            }
+
+
+            // --------------------------------
+            // 10/2、10/02
+            // --------------------------------
+            if (!match) {
+
+                match = text.match(
+                    /(?:^|[^\d])(\d{1,2})\/(\d{1,2})(?!\d)/
+                );
+
+                if (match) {
+                    month = parseInt(match[1], 10);
+                    day = parseInt(match[2], 10);
+                }
+            }
+
+
+            // 日付がなければ次へ
+            if (month === null || day === null) {
                 continue;
             }
 
-            const diff = Math.abs(
-                candidate.getTime() - today.getTime()
-            );
 
-            if (diff < bestDiff) {
-                bestDiff = diff;
-                bestDate = candidate;
+            // 基本は今年
+            if (year === null) {
+                year = todayYear;
+
+                /*
+                 * 年またぎ対策
+                 *
+                 * 今日が1～2月で
+                 * 11～12月の見出しなら前年
+                 *
+                 * 今日が11～12月で
+                 * 1～2月の見出しなら翌年
+                 */
+                if (
+                    todayMonth <= 2 &&
+                    month >= 11
+                ) {
+                    year = todayYear - 1;
+                } else if (
+                    todayMonth >= 11 &&
+                    month <= 2
+                ) {
+                    year = todayYear + 1;
+                }
             }
-        }
-
-        return bestDate;
-    }
 
 
-    /*
-     * 見出し文字列から日付を取り出す
-     */
-    function extractDate(text, today) {
-
-        let match;
-        let year = null;
-        let month = null;
-        let day = null;
-
-
-        // -----------------------------
-        // 2026年10月1日
-        // -----------------------------
-        match = text.match(
-            /(\d{4})年(\d{1,2})月(\d{1,2})日/
-        );
-
-        if (match) {
-
-            year  = parseInt(match[1], 10);
-            month = parseInt(match[2], 10);
-            day   = parseInt(match[3], 10);
-        }
-
-
-        // -----------------------------
-        // 2026/10/1
-        // -----------------------------
-        if (!match) {
-
-            match = text.match(
-                /(?:^|[^\d])(\d{4})\/(\d{1,2})\/(\d{1,2})(?!\d)/
-            );
-
-            if (match) {
-
-                year  = parseInt(match[1], 10);
-                month = parseInt(match[2], 10);
-                day   = parseInt(match[3], 10);
-            }
-        }
-
-
-        // -----------------------------
-        // 10月1日
-        // -----------------------------
-        if (!match) {
-
-            match = text.match(
-                /(\d{1,2})月(\d{1,2})日/
-            );
-
-            if (match) {
-
-                month = parseInt(match[1], 10);
-                day   = parseInt(match[2], 10);
-            }
-        }
-
-
-        // -----------------------------
-        // 10/1
-        // 10/01
-        //
-        // 10/1 と 10/10 を区別
-        // -----------------------------
-        if (!match) {
-
-            match = text.match(
-                /(?:^|[^\d/])(\d{1,2})\/(\d{1,2})(?![\d/])/
-            );
-
-            if (match) {
-
-                month = parseInt(match[1], 10);
-                day   = parseInt(match[2], 10);
-            }
-        }
-
-
-        if (month === null || day === null) {
-            return null;
-        }
-
-
-        if (
-            month < 1 ||
-            month > 12 ||
-            day < 1 ||
-            day > 31
-        ) {
-            return null;
-        }
-
-
-        let topicDate;
-
-
-        // 年が明記されている
-        if (year !== null) {
-
-            topicDate = new Date(
+            var topicDate = new Date(
                 year,
                 month - 1,
                 day
             );
 
 
-            // 不正日付
+            // --------------------------------
+            // 不正な日付を除外
+            // 例：2月31日
+            // --------------------------------
             if (
                 topicDate.getFullYear() !== year ||
                 topicDate.getMonth() + 1 !== month ||
                 topicDate.getDate() !== day
             ) {
-                return null;
-            }
-        }
-
-        // 年がない
-        else {
-
-            topicDate = resolveYear(
-                month,
-                day,
-                today
-            );
-
-            if (!topicDate) {
-                return null;
-            }
-        }
-
-
-        return {
-            date: topicDate,
-            month: month,
-            day: day,
-            text: month + '月' + day + '日'
-        };
-    }
-
-
-    /*
-     * 対象見出しへスクロール
-     */
-    function scrollToTopic(element) {
-
-        element.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
-
-
-        const originalBg =
-            element.style.backgroundColor;
-
-        element.style.backgroundColor =
-            '#fff3cd';
-
-
-        setTimeout(function () {
-
-            element.style.backgroundColor =
-                originalBg;
-
-        }, 2000);
-    }
-
-
-    /*
-     * メイン処理
-     */
-    function jumpToToday() {
-
-        const now = new Date();
-
-        const today = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate()
-        );
-
-
-        const todayMonth =
-            today.getMonth() + 1;
-
-        const todayDay =
-            today.getDate();
-
-
-        /*
-         * Moodle等を想定
-         */
-        const elements =
-            document.querySelectorAll(
-                'h2, h3, h4, h5, .sectionname, .contenttitle'
-            );
-
-
-        let todayElement = null;
-
-
-        /*
-         * 直近の過去
-         */
-        let previousElement = null;
-        let previousDate = null;
-        let previousText = '';
-
-
-        /*
-         * 最も近い未来
-         */
-        let nextElement = null;
-        let nextDate = null;
-        let nextText = '';
-
-
-        for (let i = 0; i < elements.length; i++) {
-
-            const text =
-                elements[i].textContent ||
-                elements[i].innerText ||
-                '';
-
-
-            const result =
-                extractDate(text, today);
-
-
-            if (!result) {
                 continue;
             }
 
 
-            const topicDate =
-                result.date;
+            var topicText =
+                month + '月' + day + '日';
 
 
-            /*
-             * 今日
-             */
+            // =================================
+            // 1. 今日そのもの
+            // =================================
             if (
-                topicDate.getTime() ===
-                today.getTime()
+                topicDate.getTime() === today.getTime()
             ) {
 
-                todayElement =
-                    elements[i];
-
+                todayElement = elements[i];
                 break;
             }
 
 
-            /*
-             * 過去
-             *
-             * 今日以前で
-             * 一番新しい日付を保持
-             */
+            // =================================
+            // 2. 今日より過去
+            //    最も新しいものを保持
+            // =================================
             if (topicDate < today) {
 
                 if (
@@ -331,24 +214,17 @@
                     topicDate > previousDate
                 ) {
 
-                    previousDate =
-                        topicDate;
-
-                    previousElement =
-                        elements[i];
-
-                    previousText =
-                        result.text;
+                    previousDate = topicDate;
+                    previousElement = elements[i];
+                    previousText = topicText;
                 }
             }
 
 
-            /*
-             * 未来
-             *
-             * 今日より後で
-             * 一番近い日付を保持
-             */
+            // =================================
+            // 3. 今日より未来
+            //    最も近いものを保持
+            // =================================
             if (topicDate > today) {
 
                 if (
@@ -356,120 +232,89 @@
                     topicDate < nextDate
                 ) {
 
-                    nextDate =
-                        topicDate;
-
-                    nextElement =
-                        elements[i];
-
-                    nextText =
-                        result.text;
+                    nextDate = topicDate;
+                    nextElement = elements[i];
+                    nextText = topicText;
                 }
             }
         }
 
 
-        /*
-         * 1. 今日がある
-         */
+        // =====================================
+        // ① 今日がある
+        // =====================================
         if (todayElement) {
 
-            scrollToTopic(
-                todayElement
-            );
-
+            scrollToTopic(todayElement);
             return;
         }
 
 
-        /*
-         * 2. 今日がない
-         *    → 直近の過去
-         */
+        // =====================================
+        // ② 今日がない
+        //    → 直近の過去を優先
+        // =====================================
         if (previousElement) {
 
             alert(
                 '本日（' +
-                todayMonth +
-                '月' +
-                todayDay +
-                '日）のトピックはありません。\n\n' +
-
+                todayMonth + '月' +
+                todayDay + '日）のトピックはありません。\n\n' +
                 '直近のトピック（' +
                 previousText +
                 '）へ移動します。'
             );
 
-
-            scrollToTopic(
-                previousElement
-            );
-
+            scrollToTopic(previousElement);
             return;
         }
 
 
-        /*
-         * 3. 過去がない
-         *    → 最も近い未来
-         */
+        // =====================================
+        // ③ 過去が1件もない
+        //    → 最も近い未来へ
+        // =====================================
         if (nextElement) {
 
             alert(
                 '本日以前のトピックはありません。\n\n' +
-
                 '次のトピック（' +
                 nextText +
                 '）へ移動します。'
             );
 
-
-            scrollToTopic(
-                nextElement
-            );
-
+            scrollToTopic(nextElement);
             return;
         }
 
 
-        /*
-         * 日付がない
-         */
         alert(
             '日付が含まれるトピックを見つけられませんでした。'
         );
     }
 
 
-    /*
-     * HTML側から
-     * onclick="jumpToToday()"
-     * で呼べるように公開
-     */
-    window.jumpToToday =
-        jumpToToday;
+    /* --------------------------------
+       指定したトピックへ移動
+    -------------------------------- */
+    function scrollToTopic(element) {
 
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
 
-    /*
-     * バージョン表示
-     */
-    document.addEventListener(
-        'DOMContentLoaded',
-        function () {
+        var originalBg =
+            element.style.backgroundColor;
 
-            const versions =
-                document.querySelectorAll(
-                    '.today-jump-version'
-                );
+        element.style.backgroundColor =
+            '#fff3cd';
 
-            versions.forEach(
-                function (element) {
+        setTimeout(function() {
 
-                    element.textContent =
-                        VERSION;
-                }
-            );
-        }
-    );
+            element.style.backgroundColor =
+                originalBg;
 
-})();
+        }, 2000);
+    }
+</script>
